@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kimya Elementleri Eşleştirme Oyunu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #f0f8ff;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lab-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .hint {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(52, 152, 219, 0.95);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 16px;
+            z-index: 1001;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -60%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+
+        .beaker {
+            position: absolute;
+            width: 60px;
+            height: 80px;
+            background: linear-gradient(to bottom, #3498db55, #2980b955);
+            border: 2px solid #2980b9;
+            border-radius: 0 0 10px 10px;
+            animation: bubble 3s infinite;
+            overflow: hidden;
+        }
+
+        .beaker::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.4) 10%, transparent 20%);
+            animation: bubbleRise 2s infinite linear;
+        }
+
+        .beaker::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -5px;
+            right: -5px;
+            height: 10px;
+            background: #2980b9;
+            border-radius: 5px;
+        }
+
+        .test-tube {
+            position: absolute;
+            width: 20px;
+            height: 100px;
+            background: linear-gradient(to bottom, #e74c3c55, #c0392b55);
+            border: 2px solid #e74c3c;
+            border-radius: 0 0 10px 10px;
+            transform: rotate(15deg);
+            animation: bubble 2.5s infinite;
+            overflow: hidden;
+        }
+
+        .test-tube::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.4) 5%, transparent 15%);
+            animation: bubbleRise 1.5s infinite linear;
+        }
+
+        .flask {
+            position: absolute;
+            width: 80px;
+            height: 100px;
+            background: linear-gradient(to bottom, #27ae6055, #219a5155);
+            border: 2px solid #27ae60;
+            border-radius: 50% 50% 10px 10px;
+            animation: bubble 4s infinite;
+            overflow: hidden;
+        }
+
+        .flask::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.4) 15%, transparent 25%);
+            animation: bubbleRise 3s infinite linear;
+        }
+
+        @keyframes bubble {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes bubbleRise {
+            0% { transform: translateY(100%) scale(0.8); }
+            100% { transform: translateY(-100%) scale(1.2); }
+        }
+
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-box {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .login-box h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 12px;
+            background: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .login-box button:hover {
+            background: #27ae60;
+        }
+
+        .game-container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 1000px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .score {
+            font-size: 24px;
+            font-style: italic;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background-color: #3498db;
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .card.selected {
+            background-color: #e67e22;
+            transform: scale(0.95);
+        }
+
+        .card.matched {
+            background-color: #27ae60;
+            transform: scale(0.98);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            pointer-events: none;
+        }
+
+        .gift-box {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            background-color: #e74c3c;
+            border-radius: 10px;
+            z-index: 1000;
+            animation: gift-appear 0.5s ease-out;
+        }
+
+        .gift-box::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 20px;
+            background-color: #c0392b;
+            border-radius: 5px;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f1c40f;
+            position: absolute;
+            animation: confetti-fall 4s ease-in-out;
+        }
+
+        @keyframes gift-appear {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes confetti-fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+        }
+
+        .reward {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .balloon, .flower {
+            font-size: 40px;
+            margin: 5px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="lab-background">
+        <div class="beaker" style="top: 5%; left: 5%;"></div>
+        <div class="test-tube" style="top: 15%; left: 20%;"></div>
+        <div class="flask" style="top: 10%; left: 35%;"></div>
+        <div class="beaker" style="top: 8%; right: 30%;"></div>
+        <div class="test-tube" style="top: 20%; right: 15%;"></div>
+        <div class="flask" style="top: 5%; right: 5%;"></div>
+        
+        <div class="beaker" style="top: 40%; left: 8%;"></div>
+        <div class="test-tube" style="top: 45%; left: 25%;"></div>
+        <div class="flask" style="top: 35%; left: 40%;"></div>
+        <div class="beaker" style="top: 42%; right: 35%;"></div>
+        <div class="test-tube" style="top: 38%; right: 20%;"></div>
+        <div class="flask" style="top: 45%; right: 8%;"></div>
+        
+        <div class="beaker" style="bottom: 25%; left: 10%;"></div>
+        <div class="test-tube" style="bottom: 30%; left: 28%;"></div>
+        <div class="flask" style="bottom: 20%; left: 45%;"></div>
+        <div class="beaker" style="bottom: 28%; right: 40%;"></div>
+        <div class="test-tube" style="bottom: 22%; right: 25%;"></div>
+        <div class="flask" style="bottom: 15%; right: 10%;"></div>
+    </div>
+
+    <div id="login" class="login-container">
+        <div class="login-box">
+            <h2>Oyuncu Adınızı Girin</h2>
+            <input type="text" id="nickname" placeholder="Oyuncu Adı" maxlength="20">
+            <button onclick="startGame()">Oyuna Başla</button>
+        </div>
+    </div>
+
+    <div class="game-container" style="display: none;">
+        <div class="score">Puan: <span id="score">0</span></div>
+        <div id="cards-container" class="cards-container"></div>
+    </div>
+    <div id="reward" class="reward"></div>
+    <div id="hint" class="hint"></div>
+
+    <script>
+        function showHint(message) {
+            const hintElement = document.getElementById('hint');
+            hintElement.textContent = message;
+            hintElement.style.display = 'block';
+            
+            setTimeout(() => {
+                hintElement.style.display = 'none';
+            }, 3000);
+        }
+        let currentPlayer = '';
+        let playerScores = JSON.parse(localStorage.getItem('playerScores')) || {};
+        let score = 0;
+        let selectedCard = null;
+        let canClick = true;
+        let consecutiveWrongAttempts = 0;
+        let lastWrongElement = null;
+
+        const elements = [
+            { symbol: 'As', name: 'arsenik' },
+            { symbol: 'Sb', name: 'antimon' },
+            { symbol: 'Cu', name: 'bakır' },
+            { symbol: 'Fe', name: 'demir' },
+            { symbol: 'Ag', name: 'gümüş' },
+            { symbol: 'Sn', name: 'kalay' },
+            { symbol: 'Au', name: 'altın' },
+            { symbol: 'Na', name: 'sodyum' },
+            { symbol: 'K', name: 'potasyum' },
+            { symbol: 'N', name: 'azot' }
+        ];
+
+        function startGame() {
+            const nickname = document.getElementById('nickname').value.trim();
+            if (nickname) {
+                currentPlayer = nickname;
+                document.getElementById('login').style.display = 'none';
+                document.querySelector('.game-container').style.display = 'block';
+                if (!playerScores[currentPlayer]) {
+                    playerScores[currentPlayer] = [];
+                }
+                initializeGame();
+            }
+        }
+
+        function saveScore(score) {
+            if (currentPlayer) {
+                playerScores[currentPlayer].push(score);
+                localStorage.setItem('playerScores', JSON.stringify(playerScores));
+                showPlayerProgress();
+            }
+        }
+
+        function showPlayerProgress() {
+            const scores = playerScores[currentPlayer];
+            if (scores && scores.length > 0) {
+                const lastScore = scores[scores.length - 1];
+                const bestScore = Math.max(...scores);
+                const averageScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+                
+                const reward = document.getElementById('reward');
+                reward.style.display = 'block';
+                
+                let balloons = '';
+                let message = '';
+                
+                if (lastScore === 100) {
+                    for (let i = 0; i < 10; i++) {
+                        balloons += '🎈';
+                    }
+                    message = 'Mükemmel! 10 Kırmızı Balon Kazandın!';
+                } else if (lastScore >= 85 && lastScore <= 95) {
+                    for (let i = 0; i < 5; i++) {
+                        balloons += '🎈';
+                    }
+                    message = '5 Kırmızı Balon Kazandın!';
+                } else if (lastScore <= 80) {
+                    message = 'Başarısız! Tekrar Denemelisin.';
+                }
+                
+                reward.innerHTML = `
+                    <h2>${lastScore === 100 ? 'Muhteşem!' : lastScore >= 85 ? 'Tebrikler' : 'Üzgünüm'} ${currentPlayer}!</h2>
+                    <p>Son Skorun: ${lastScore}</p>
+                    <p>${message}</p>
+                    <div style="font-size: 40px; margin: 20px 0;">${balloons}</div>
+                    <button onclick="location.reload()">${lastScore <= 80 ? 'Tekrar Dene' : 'Tekrar Oyna'}</button>
+                `;
+            }
+        }
+
+        function createConfetti() {
+            const giftBox = document.createElement('div');
+            giftBox.className = 'gift-box';
+            giftBox.style.left = '50%';
+            giftBox.style.top = '50%';
+            giftBox.style.transform = 'translate(-50%, -50%)';
+            document.body.appendChild(giftBox);
+
+            setTimeout(() => {
+                for (let i = 0; i < 50; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = `calc(50% + ${(Math.random() - 0.5) * 100}px)`;
+                    confetti.style.top = '50%';
+                    confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 4000);
+                }
+                setTimeout(() => giftBox.remove(), 500);
+            }, 500);
+        }
+
+        function handleCardClick(card) {
+            if (!canClick || card.classList.contains('matched')) return;
+
+            if (!selectedCard) {
+                selectedCard = card;
+                card.classList.add('selected');
+            } else {
+                canClick = false;
+                card.classList.add('selected');
+
+                const firstType = selectedCard.dataset.type;
+                const secondType = card.dataset.type;
+                const firstValue = selectedCard.dataset.value;
+                const secondValue = card.dataset.value;
+
+                if (firstType !== secondType && firstValue === secondValue) {
+                    // Eşleşme başarılı
+                    setTimeout(() => {
+                        selectedCard.classList.remove('selected');
+                        card.classList.remove('selected');
+                        selectedCard.classList.add('matched');
+                        card.classList.add('matched');
+                        selectedCard = null;
+                        canClick = true;
+                        score += 10;
+                        document.getElementById('score').textContent = score;
+                        createConfetti();
+
+                        // Tüm kartlar eşleşti mi kontrol et
+                        const matchedCards = document.querySelectorAll('.card.matched');
+                        if (matchedCards.length === elements.length * 2) {
+                            setTimeout(() => saveScore(score), 500);
+                        }
+                    }, 500);
+                } else {
+                    // Eşleşme başarısız
+                    setTimeout(() => {
+                        selectedCard.classList.remove('selected');
+                        card.classList.remove('selected');
+                        selectedCard = null;
+                        canClick = true;
+                        if (score > 0) score -= 5;
+                        document.getElementById('score').textContent = score;
+
+                        // İki kez üst üste yanlış eşleştirme kontrolü
+                        if (lastWrongElement === firstValue) {
+                            consecutiveWrongAttempts++;
+                            if (consecutiveWrongAttempts === 2) {
+                                const element = elements.find(e => e.symbol === firstValue);
+                                showHint(`İpucu: ${element.symbol} elementi ${element.name} olarak bilinir.`);
+                                consecutiveWrongAttempts = 0;
+                            }
+                        } else {
+                            lastWrongElement = firstValue;
+                            consecutiveWrongAttempts = 1;
+                        }
+                    }, 1000);
+                }
+            }
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function initializeGame() {
+            const cardsContainer = document.getElementById('cards-container');
+            const allCards = [];
+
+            // Sembol kartları oluştur
+            elements.forEach(element => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.textContent = element.symbol;
+                card.dataset.type = 'symbol';
+                card.dataset.value = element.symbol;
+                card.onclick = () => handleCardClick(card);
+                allCards.push(card);
+            });
+
+            // İsim kartları oluştur
+            elements.forEach(element => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.textContent = element.name;
+                card.dataset.type = 'name';
+                card.dataset.value = element.symbol;
+                card.onclick = () => handleCardClick(card);
+                allCards.push(card);
+            });
+
+            // Kartları karıştır
+            shuffleArray(allCards);
+
+            // Kartları ekrana yerleştir
+            cardsContainer.innerHTML = '';
+            allCards.forEach(card => cardsContainer.appendChild(card));
+        }
+
+        initializeGame();
+    </script>
+</body>
+</html>
